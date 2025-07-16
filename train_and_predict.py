@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report
 from scipy.sparse import hstack
 import warnings
+import xgboost as xgb
 warnings.filterwarnings('ignore')
 
 # === データ読み込み関連の関数 ===
@@ -389,15 +390,22 @@ def create_ensemble_model():
         random_state=42,
         n_jobs=-1
     )
+
+    xgb_model = xgb.XGBClassifier(
+        n_estimators=100,
+        max_depth=6,
+        learning_rate=0.1,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42
+    )
     
     # アンサンブルモデル
-    ensemble_model = VotingClassifier(
-        estimators=[
-            ('lr', lr_model),
-            ('rf', rf_model)
-        ],
-        voting='soft'  # 確率による投票
-    )
+    ensemble_model = VotingClassifier([
+        ('lr', LogisticRegression()),
+        ('rf', RandomForestClassifier()),
+        ('xgb', xgb_model)
+    ], voting='soft')
     
     return ensemble_model
 
